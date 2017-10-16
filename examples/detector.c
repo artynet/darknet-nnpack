@@ -707,7 +707,7 @@ void run_detector(int argc, char **argv)
     int width = find_int_arg(argc, argv, "-w", 0);
     int height = find_int_arg(argc, argv, "-h", 0);
     int fps = find_int_arg(argc, argv, "-fps", 0);
-    loop = find_int_arg(argc, argv, "-loop", 1);
+    loop = find_int_arg(argc, argv, "-loop", 0);
 
     char *datacfg = argv[3];
     char *cfg = argv[4];
