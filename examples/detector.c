@@ -624,6 +624,7 @@ void test_detector(char *datacfg, char *cfgfile, char *weightfile, char *filenam
             }
             strncpy(input, filename, 256);
         } else {
+            loop=1;
             printf("Enter Image Path: ");
             fflush(stdout);
             input = fgets(input, 256, stdin);
