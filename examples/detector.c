@@ -1,5 +1,11 @@
 #include "darknet.h"
 #include <sys/time.h>
+#include <sys/inotify.h>
+
+#define MAX_EVENTS 2 /*Max. number of events to process at one go*/
+#define LEN_NAME 4 /*the length of the filename max 16 bytes*/
+#define EVENT_SIZE  ( sizeof (struct inotify_event) ) /*size of one event*/
+#define BUF_LEN     ( MAX_EVENTS * ( EVENT_SIZE + LEN_NAME ))  /*buffer store data*/
 
 static int coco_ids[] = {1,2,3,4,5,6,7,8,9,10,11,13,14,15,16,17,18,19,20,21,22,23,24,25,27,28,31,32,33,34,35,36,37,38,39,40,41,42,43,44,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65,67,70,72,73,74,75,76,77,78,79,80,81,82,84,85,86,87,88,89,90};
 int loop = 0;
@@ -578,7 +584,7 @@ void validate_detector_recall(char *cfgfile, char *weightfile)
     }
 }
 
-void test_detector(char *datacfg, char *cfgfile, char *weightfile, char *filename, float thresh, float hier_thresh, char *outfile, int fullscreen)
+void test_detector(char *datacfg, char *cfgfile, char *weightfile, char *filename, char *watch_file, float thresh, float hier_thresh, char *outfile, int fullscreen)
 {
     list *options = read_data_cfg(datacfg);
     char *name_list = option_find_str(options, "names", "data/names.list");
@@ -595,6 +601,8 @@ void test_detector(char *datacfg, char *cfgfile, char *weightfile, char *filenam
     char buff[256];
     char *input = buff;
     int j;
+    int length,wd,fd;
+    char buffer[BUF_LEN];
     float nms=.4;
 #ifdef NNPACK
 	nnp_initialize();
@@ -603,8 +611,20 @@ void test_detector(char *datacfg, char *cfgfile, char *weightfile, char *filenam
 
     while(1){
         if(filename){
+            if(watch_file){
+              loop=1;
+              fd=inotify_init();
+              if ( fd < 0 ) {
+                perror( "Couldn't initialize inotify");
+              }
+              wd = inotify_add_watch(fd, watch_file, IN_MODIFY);
+              length=read( fd, buffer, BUF_LEN );
+              printf("file edited: %s\n",watch_file);
+              inotify_rm_watch( fd, wd );
+            }
             strncpy(input, filename, 256);
         } else {
+            loop=1;
             printf("Enter Image Path: ");
             fflush(stdout);
             input = fgets(input, 256, stdin);
@@ -707,6 +727,7 @@ void run_detector(int argc, char **argv)
     int width = find_int_arg(argc, argv, "-w", 0);
     int height = find_int_arg(argc, argv, "-h", 0);
     int fps = find_int_arg(argc, argv, "-fps", 0);
+    char *watch_file = find_char_arg(argc, argv, "-watch", 0);
     loop = find_int_arg(argc, argv, "-loop", 0);
 
     char *datacfg = argv[3];
@@ -714,7 +735,7 @@ void run_detector(int argc, char **argv)
     char *weights = (argc > 5) ? argv[5] : 0;
     char *filename = (argc > 6) ? argv[6]: 0;
 
-    if(0==strcmp(argv[2], "test")) test_detector(datacfg, cfg, weights, filename, thresh, hier_thresh, outfile, fullscreen);
+    if(0==strcmp(argv[2], "test")) test_detector(datacfg, cfg, weights, filename, watch_file, thresh, hier_thresh, outfile, fullscreen);
     else if(0==strcmp(argv[2], "train")) train_detector(datacfg, cfg, weights, gpus, ngpus, clear);
     else if(0==strcmp(argv[2], "valid")) validate_detector(datacfg, cfg, weights, outfile);
     else if(0==strcmp(argv[2], "valid2")) validate_detector_flip(datacfg, cfg, weights, outfile);
