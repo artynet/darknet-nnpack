@@ -609,18 +609,18 @@ void test_detector(char *datacfg, char *cfgfile, char *weightfile, char *filenam
 	net.threadpool = pthreadpool_create(4);
 #endif
 
+    fd=inotify_init();
+    if ( fd < 0 ) {
+      perror( "Couldn't initialize inotify");
+    }
+    wd = inotify_add_watch(fd, watch_file, IN_CLOSE_WRITE);
+
     while(1){
         if(filename){
             if(watch_file){
               loop=1;
-              fd=inotify_init();
-              if ( fd < 0 ) {
-                perror( "Couldn't initialize inotify");
-              }
-              wd = inotify_add_watch(fd, watch_file, IN_MODIFY);
               length=read( fd, buffer, BUF_LEN );
               printf("file edited: %s\n",watch_file);
-              inotify_rm_watch( fd, wd );
             }
             strncpy(input, filename, 256);
         } else {
