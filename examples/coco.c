@@ -212,7 +212,7 @@ void validate_coco(char *cfgfile, char *weightfile)
             free_image(val_resized[t]);
         }
     }
-    fseek(fp, -2, SEEK_CUR); 
+    fseek(fp, -2, SEEK_CUR);
     fprintf(fp, "\n]\n");
     fclose(fp);
 
@@ -306,7 +306,7 @@ void validate_coco_recall(char *cfgfile, char *weightfile)
     }
 }
 
-void test_coco(char *cfgfile, char *weightfile, char *filename, float thresh)
+void test_coco(char *cfgfile, char *weightfile, char *filename, float thresh, char* output_file)
 {
     image **alphabet = load_alphabet();
     network net = parse_network_cfg(cfgfile);
@@ -342,7 +342,8 @@ void test_coco(char *cfgfile, char *weightfile, char *filename, float thresh)
         printf("%s: Predicted in %f seconds.\n", input, sec(clock()-time));
         get_detection_boxes(l, 1, 1, thresh, probs, boxes, 0);
         if (nms) do_nms_sort(boxes, probs, l.side*l.side*l.n, l.classes, nms);
-        draw_detections(im, l.side*l.side*l.n, thresh, boxes, probs, coco_classes, alphabet, 80);
+        //draw_detections(im, l.side*l.side*l.n, thresh, boxes, probs, coco_classes, alphabet, 80);
+        draw_detections_output(im, l.side*l.side*l.n, thresh, boxes, probs, coco_classes, alphabet, 80, output_file);
         save_image(im, "prediction");
         show_image(im, "predictions");
         free_image(im);
@@ -371,7 +372,8 @@ void run_coco(int argc, char **argv)
     char *weights = (argc > 4) ? argv[4] : 0;
     char *filename = (argc > 5) ? argv[5]: 0;
     int avg = find_int_arg(argc, argv, "-avg", 1);
-    if(0==strcmp(argv[2], "test")) test_coco(cfg, weights, filename, thresh);
+    char *output_file = find_char_arg(argc, argv, "-output", "/tmp/prediction.txt");
+    if(0==strcmp(argv[2], "test")) test_coco(cfg, weights, filename, thresh, output_file);
     else if(0==strcmp(argv[2], "train")) train_coco(cfg, weights);
     else if(0==strcmp(argv[2], "valid")) validate_coco(cfg, weights);
     else if(0==strcmp(argv[2], "recall")) validate_coco_recall(cfg, weights);

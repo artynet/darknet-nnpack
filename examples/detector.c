@@ -584,7 +584,7 @@ void validate_detector_recall(char *cfgfile, char *weightfile)
     }
 }
 
-void test_detector(char *datacfg, char *cfgfile, char *weightfile, char *filename, char *watch_file, float thresh, float hier_thresh, char *outfile, int fullscreen)
+void test_detector(char *datacfg, char *cfgfile, char *weightfile, char *filename, char *watch_file, char *output_file, float thresh, float hier_thresh, char *outfile, int fullscreen)
 {
     list *options = read_data_cfg(datacfg);
     char *name_list = option_find_str(options, "names", "data/names.list");
@@ -620,7 +620,7 @@ void test_detector(char *datacfg, char *cfgfile, char *weightfile, char *filenam
             if(watch_file){
               loop=1;
               length=read( fd, buffer, BUF_LEN );
-              printf("file edited: %s\n",watch_file);
+              printf("file closed: %s\n",watch_file);
             }
             strncpy(input, filename, 256);
         } else {
@@ -656,7 +656,8 @@ void test_detector(char *datacfg, char *cfgfile, char *weightfile, char *filenam
         get_region_boxes(l, im.w, im.h, net.w, net.h, thresh, probs, boxes, 0, 0, hier_thresh, 1);
         if (nms) do_nms_obj(boxes, probs, l.w*l.h*l.n, l.classes, nms);
         //else if (nms) do_nms_sort(boxes, probs, l.w*l.h*l.n, l.classes, nms);
-        draw_detections(im, l.w*l.h*l.n, thresh, boxes, probs, names, alphabet, l.classes);
+        //draw_detections(im, l.w*l.h*l.n, thresh, boxes, probs, names, alphabet, l.classes);
+        draw_detections_output(im, l.w*l.h*l.n, thresh, boxes, probs, names, alphabet, l.classes, output_file);
         if(outfile){
             //save_image(im, outfile);
         }
@@ -728,6 +729,7 @@ void run_detector(int argc, char **argv)
     int height = find_int_arg(argc, argv, "-h", 0);
     int fps = find_int_arg(argc, argv, "-fps", 0);
     char *watch_file = find_char_arg(argc, argv, "-watch", 0);
+    char *output_file = find_char_arg(argc, argv, "-output", "/tmp/prediction.txt");
     loop = find_int_arg(argc, argv, "-loop", 0);
 
     char *datacfg = argv[3];
@@ -735,7 +737,7 @@ void run_detector(int argc, char **argv)
     char *weights = (argc > 5) ? argv[5] : 0;
     char *filename = (argc > 6) ? argv[6]: 0;
 
-    if(0==strcmp(argv[2], "test")) test_detector(datacfg, cfg, weights, filename, watch_file, thresh, hier_thresh, outfile, fullscreen);
+    if(0==strcmp(argv[2], "test")) test_detector(datacfg, cfg, weights, filename, watch_file, output_file, thresh, hier_thresh, outfile, fullscreen);
     else if(0==strcmp(argv[2], "train")) train_detector(datacfg, cfg, weights, gpus, ngpus, clear);
     else if(0==strcmp(argv[2], "valid")) validate_detector(datacfg, cfg, weights, outfile);
     else if(0==strcmp(argv[2], "valid2")) validate_detector_flip(datacfg, cfg, weights, outfile);
