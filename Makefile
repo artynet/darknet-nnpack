@@ -27,7 +27,7 @@ ARFLAGS=rcs
 OPTS=-Ofast
 LDFLAGS= -lm -pthread 
 COMMON= -Iinclude/ -Isrc/
-CFLAGS=-Wall -Wfatal-errors -fPIC
+CFLAGS=-Wall -Wfatal-errors -fPIC -Wno-shift-count-overflow -Wno-format
 
 ifeq ($(DEBUG), 1) 
 OPTS=-O0 -g
